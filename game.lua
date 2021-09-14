@@ -3,7 +3,8 @@ local composer      = require( "composer" )
 
 local scene         = composer.newScene()
 
-local build_release = false
+local build_release    = true
+local ship_body_active = true
 
 local physics       = require("physics")
 
@@ -275,6 +276,7 @@ local laser_name_1         = "laser1"
 local laser_name_2         = "laser2"
 local enemy_name_1         = "virus"
 local enemy_boss_name_1    = "COVID_BOSS_1"
+local enemy_laser_name_1   = "laser3"
 
 local spawn_X_1            = -60
 local spawn_Y_2            = -60
@@ -330,7 +332,7 @@ local function setDebugOptions()
  shieldVisible     = true
  gameplayTime      = thresholdSpawning
  SCALE_TIME        = 0.2
- ship.isBodyActive = build_release
+ ship.isBodyActive = ship_body_active
 end
 
 local function pausePlayerMovements()
@@ -839,11 +841,11 @@ local function explodeLaserAndRemove(obj1,obj2)
            local midX           = (obj1.x + obj2.x)/2
            local midY           = (obj2.y + obj2.y)/2
 
-if obj1.myName == enemy_name_1 or obj1.myName == laser_name_1
+if obj1.myName == enemy_name_1 or obj1.myName == laser_name_1 or obj1.myName == enemy_laser_name_1
 then
            display.remove(obj1)  
 end
-if obj2.myName == enemy_name_1 or obj2.myName == laser_name_1
+if obj2.myName == enemy_name_1 or obj2.myName == laser_name_1 or obj2.myName == enemy_laser_name_1
 then
            display.remove(obj2)  
 end
@@ -1015,7 +1017,8 @@ local function endGame()
     composer.gotoScene( gameover_scene, { time=800, effect="crossFade" } )
 end
    --manage  collisione betwenn objects
-   local function onCollision(event)
+local function onCollision(event)
+  
 	if(event.phase == "began") then
 
 	   local obj1 = event.object1
@@ -1042,6 +1045,7 @@ end
 				break
 			   end
 			end
+      
 elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth_1) and obj2.myName == enemy_name_1) or 
 		  (obj1.myName == enemy_name_1 and (obj2.myName == missile_name_left_1 or obj2.myName == missile_name_rigth_1)))
 	   then
@@ -1106,7 +1110,7 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
 	   elseif((obj1.myName == ship_name_1 and obj2.myName == enemy_name_1) or (obj1.myName == enemy_name_1 and obj2.myName == ship_name_1))
 	   then
 		   if(died == false and gameEnded == false) then
-			   died      = true
+			   died = true
 
 			    -- Play explosion sound!
                 audio.play( playerDeadSound )
@@ -1115,32 +1119,66 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
 			 --  livesText.text = message_live_1 .. lives
    
 			   if(lives == 0) then
-				   gameEnded = true
-                   effectDeadShipAndWeapons()
-				   display.remove(ship)
-				   display.remove(heart)
-				  -- display.remove(hourglass)
-				   display.remove(avatar)
 
-				   if(leftMissileDestroyed == false) then
-					display.remove(leftMissileShip)
-				   end
-
-				   if(rigthMissileDestroyed == false) then
-				    display.remove(rigthMissileShip)
-				   end
-
-				   --livesText.text = message_lives_rip
-				   composer.setVariable("Survived",false)
-				   timer.performWithDelay( 2000, endGame )
-
+           effectDeadShipAndWeapons()
+				  
 			   else
 				   effectDeadShipAndWeapons()
 				   timer.performWithDelay(1000,effectRestoreShipAndWeapons)
 			   end
    
 		   end
-	   
+	   	   elseif((obj1.myName == ship_name_1 and obj2.myName == enemy_boss_name_1) or (obj1.myName == enemy_boss_name_1 and obj2.myName == ship_name_1))
+	   then
+		   if(died == false and gameEnded == false) then
+			   died = true
+
+         lives = lives - 1
+
+			    -- Play explosion sound!
+                audio.play( playerDeadSound )
+                 
+			 --  livesText.text = message_live_1 .. lives
+   
+			   if(lives == 0) then
+
+           effectDeadShipAndWeapons()
+				  
+			   else
+				   effectDeadShipAndWeapons()
+				   timer.performWithDelay(1000,effectRestoreShipAndWeapons)
+			   end
+   
+		   end
+     	   	   elseif((obj1.myName == ship_name_1 and obj2.myName == enemy_laser_name_1) or (obj1.myName == enemy_laser_name_1 and obj2.myName == ship_name_1))
+	   then
+		   if(died == false and gameEnded == false) then
+			   died = true
+
+			    -- Play explosion sound!
+                audio.play( playerDeadSound )
+                explodeLaserAndRemove(obj1,obj2)
+                
+                for i = #lasersTable,1,-1 do
+			            if(lasersTable[i] == obj1 or lasersTable[i] == obj2) then
+				           table.remove(lasersTable,i)
+                  break
+                 end
+		          	end
+			   lives = lives - 1
+			 --  livesText.text = message_live_1 .. lives
+   
+			   if(lives == 0) then
+
+           effectDeadShipAndWeapons()
+				  
+			   else
+				   effectDeadShipAndWeapons()
+				   timer.performWithDelay(1000,effectRestoreShipAndWeapons)
+			   end
+   
+		   end
+    
 	   end
 	end
    
@@ -1209,10 +1247,17 @@ local function updatePlayTime()
       end
 end
 
-local GAME_START_LOOP = 1
-local GAME_PLAYING    = 2
-local GAME_SPAWNING   = 3
-local GAME_BOSS       = 4
+local GAME_STATE =
+{
+  GAME_START_LOOP    = 1,
+  GAME_PLAYING       = 2,
+  GAME_SPAWNING      = 3,
+  GAME_BOSS_SPAWNING = 4,
+  GAME_BOSS          = 5,
+  GAME_DIED          = 6,
+  GAME_SURVIVED      = 7,
+  GAME_TIMEOUT       = 8
+}
 local b_GAME_START_LOOP = false
 local b_GAME_PLAYING    = false
 local b_GAME_SPAWNING   = false
@@ -1221,10 +1266,38 @@ local b_GAME_BOSS       = false
 local game_state = 0
 
 local function verifyState(state)
+  
+  
+  
   if(game_state == state) then
   	return true
   end
 
+  if(state == GAME_STATE.GAME_PLAYING and gameplayTime<=thresholdSpawning)
+  then
+    return true
+  end
+
+  if(state == GAME_STATE.GAME_BOSS_SPAWNING and gameplayTime > thresholdSpawning and boss == nil)
+   then
+     return true
+   end
+
+  if(state == GAME_STATE.GAME_DIED and died == true)
+   then
+     return true
+   end
+   
+   if(state == GAME_STATE.GAME_SURVIVED and survived == true)
+   then
+     return true
+   end
+   
+   if(state == GAME_STATE.GAME_TIMEOUT and gameplayTime >= SECONDS_TO_GAMEOVER)
+   then 
+     return true
+   end
+   
   return false
 end
 
@@ -1234,25 +1307,25 @@ local function updateStateOnce(state)
   	return
    end
 
-      if(state == GAME_START_LOOP and b_GAME_START_LOOP == false)
+      if(state == GAME_STATE.GAME_START_LOOP and b_GAME_START_LOOP == false)
      	then
           b_GAME_START_LOOP = true
           game_state = state
           return
         end
-      if(state == GAME_PLAYING and b_GAME_PLAYING == false)
+      if(state == GAME_STATE.GAME_PLAYING and b_GAME_PLAYING == false)
      	then
    	      b_GAME_PLAYING = true
           game_state = state
           return
         end
-      if(state == GAME_SPAWNING and b_GAME_SPAWNING == false)
+      if(state == GAME_STATE.GAME_SPAWNING and b_GAME_SPAWNING == false)
    	    then
    	      b_GAME_SPAWNING  = true
           game_state = state
           return
         end
-      if(state == GAME_BOSS and b_GAME_BOSS == false)
+      if(state == GAME_STATE.GAME_BOSS and b_GAME_BOSS == false)
      	then
      	  b_GAME_BOSS  = true
           game_state = state
@@ -1273,7 +1346,6 @@ local function bossBefore()
 end
 
 local function bossAfter()
-  updateStateOnce(GAME_BOSS)
   playTime()
   playPlayerMovements()
   playFire()
@@ -1324,6 +1396,11 @@ end
     
 local function fireLaserWaveBoss()
 
+if(gameEnded == true)
+ then
+  return
+ end
+ 
     audio.play( fireLaserSound )
 
     for i=1,BOSS_FIRE_OPTIONS.BOSS_BULLETS_WAVE,1 do
@@ -1333,7 +1410,8 @@ local function fireLaserWaveBoss()
 
      table.insert(lasersTable,bossFire) 
      physics.addBody(bossFire,"dynamic",{isSensor=true,radius=161*0.3})
-     
+     bossFire.myName = enemy_laser_name_1
+    -- bossFire.isBullet = true
      local bulletOffset  = (i - BOSS_FIRE_OPTIONS.BOSS_BULLETS_WAVE/2) * 10
 
      bossFire.x          = boss.x + bulletOffset
@@ -1374,7 +1452,10 @@ local function fireLaserWaveBoss()
 end
 
 local function fireLaserLineBoss()
-
+if(gameEnded == true)
+ then
+  return
+ end
     audio.play( fireLaserSound )
 
     for i=1,BOSS_FIRE_OPTIONS.BOSS_BULLETS_LINE,1 do
@@ -1384,7 +1465,9 @@ local function fireLaserLineBoss()
      table.insert(lasersTable,bossFire) 
 
      physics.addBody(bossFire,"dynamic",{isSensor=true,radius=40*0.3})
-    
+     bossFire.myName = enemy_laser_name_1
+  --   bossFire.isBullet = true
+      
      local vectorFacingX = ship.x - boss.x
      local vectorFacingY = ship.y - boss.y
      
@@ -1406,7 +1489,10 @@ local function fireLaserLineBoss()
     end
 end
 local function fireLaserSphereBoss()
-
+if(gameEnded == true)
+ then
+  return
+ end
     audio.play(fireLaserSound)
 
     local firingSlice   = math.rad(180 / BOSS_FIRE_OPTIONS.BOSS_BULLETS_SPHERE)
@@ -1420,7 +1506,9 @@ local function fireLaserSphereBoss()
      table.insert(lasersTable,bossFire) 
 
      physics.addBody(bossFire,"dynamic",{isSensor=true,radius=32.5*0.3})
-    
+     bossFire.myName = enemy_laser_name_1
+   --  bossFire.isBullet = true
+       
      local newVectorFacingX
      local newVectorFacingY
 
@@ -1453,6 +1541,7 @@ local function doBossFire()
 
 
 
+ 
    if(BOSS_FIRE_MODE == BOSS_FIRE_OPTIONS.BOSS_FIRE_WAVE)
      then
        fireLaserWaveBoss()
@@ -1468,12 +1557,63 @@ local function doBossFire()
 end
 
 local function doGameOverSurvived()
-      gameEnded = true
-			physics.pause()
-			composer.setVariable( "Survived", true)
-			endGame()
-end
+       gameEnded = true
+        
+          physics.pause()
+        
+           display.remove(ship)
+				   display.remove(heart)
+				   display.remove(hourglass)
+				   display.remove(avatar)
 
+				   if(leftMissileDestroyed == false) then
+				  	display.remove(leftMissileShip)
+				   end
+
+				   if(rigthMissileDestroyed == false) then
+				    display.remove(rigthMissileShip)
+				   end
+display.remove(scorePrefix)
+display.remove(livesText)
+display.remove(scoreText)
+display.remove(scorePrefix)
+display.remove(antivirusText)
+display.remove(timeText)
+display.remove(uiGroup)
+
+				   composer.setVariable("Survived",true)
+
+			     endGame()
+end
+local function doGameOverDied()
+  
+           gameEnded = true
+        
+          physics.pause()
+        
+           display.remove(ship)
+				   display.remove(heart)
+				   display.remove(hourglass)
+				   display.remove(avatar)
+
+				   if(leftMissileDestroyed == false) then
+				  	display.remove(leftMissileShip)
+				   end
+
+				   if(rigthMissileDestroyed == false) then
+				    display.remove(rigthMissileShip)
+				   end
+display.remove(scorePrefix)
+display.remove(livesText)
+display.remove(scoreText)
+display.remove(scorePrefix)
+display.remove(antivirusText)
+display.remove(timeText)
+display.remove(uiGroup)
+				   composer.setVariable("Survived",false)
+
+			     endGame()
+end
 
 local function removeOffscreenGameObjects()
    removeViruses()
@@ -1513,42 +1653,54 @@ end
 
 local function updateAI()
 
-if(gameEnded == false)
-	 then
+     updateStateOnce(GAME_STATE.GAME_PLAYING)
 
-        updateStateOnce(GAME_PLAYING)
-
-		if (gameplayTime<=thresholdSpawning) 
+		 if (verifyState(GAME_STATE.GAME_PLAYING)) 
 		 then
-		     updateStateOnce(GAME_SPAWNING)
-	  		 createViruses() 
-      	 end
+		     updateStateOnce(GAME_STATE.GAME_SPAWNING)
+     end
+     
+     if(verifyState(GAME_STATE.GAME_SPAWNING))
+     then
+         createViruses() 
+     end
 
-    	if(gameplayTime > thresholdSpawning and boss == nil)
-   		 then
+    if(verifyState(GAME_STATE.GAME_BOSS_SPAWNING))
+      then
+         updateStateOnce(GAME_STATE.GAME_BOSS)
      		 createBossWithTransition(bossInfo.BOSS_HEIGTH/2,SECONDS_TRANSITION_BOSS * 1000,bossBefore,bossAfter)
-    	 end
+      end
 
-       if(verifyState(GAME_BOSS))
+    if(verifyState(GAME_STATE.GAME_BOSS))
        	 then
                 updateAntivirus()
                 moveAndRotateBoss()
                 setBossFireModeOnPlayTime()
-                doBossFire()
-                if(survived == true)
+                if(gameplayTime > thresholdSpawning + SCALE_TIME)
                  then
-                   doGameOverSurvived()
+                  doBossFire()
                  end
        	 end
        
-		if(gameplayTime >= SECONDS_TO_GAMEOVER) 
+       
+     if(verifyState(GAME_STATE.GAME_SURVIVED))
+       then
+         doGameOverSurvived()
+       end
+       
+     if(verifyState(GAME_STATE.GAME_DIED))
+         then
+            doGameOverDied()
+      end 
+                 
+		if(verifyState(GAME_STATE.GAME_TIMEOUT)) 
 		 then
 			doGameOverSurvived()
 		 end
 
 	   removeOffscreenGameObjects()
 
-    end
+    
 
 end
 
