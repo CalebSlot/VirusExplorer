@@ -18,8 +18,29 @@ physics.setGravity(0,0)
 local fieldRadius = 120
 local fieldPower  = 0.4
 
+--TODO: finish this data type.....
+local sheetSyringes =
+{
+  frames = 
+  {
+    { --1) INFECTED
+      x      = 95,
+      y      = 4,
+      width  = 28,
+      height = 67
+      
+    },
+    { --2) NOT INFECTED
+      x      = 95,
+      y      = 132,
+      width  = 28,
+      height = 67
+      
+    },
+  },
+}
 
-local sheetOptions =
+local sheetCommons =
 {
     frames =
     {
@@ -28,14 +49,14 @@ local sheetOptions =
             y = 0,
             width = 173,
             height = 172
-		},
+        },
 		
         {   -- 2) laser
             x = 173,
             y = 0,
             width = 10,
             height = 38
-		},
+		    },
 		
         {   -- 3) missile
             x      = 183,
@@ -167,7 +188,8 @@ local PATHS =
  path_laserExplosion    = "imgs/explosion/explosion_laser.png",
  path_missileExplosion  = "imgs/explosion/explosion_missile.png",
  path_background        = "imgs/background.png",
- path_sheet             = "imgs/gameObjects.png",
+ path_sheet_commons     = "imgs/gameObjects.png",
+ path_sheet_syringes    = "imgs/Syrynge.png",
  path_shipExplosion     = "imgs/explosion/explosion_ship.png",
  path_shipAcceleration  = "imgs/flame_sheet.png",
  path_shield            = "imgs/shield_sheet.png",
@@ -184,7 +206,8 @@ local PATHS =
 
 }
 --load the sheets  
-local objectSheet            = graphics.newImageSheet(PATHS.path_sheet,sheetOptions)
+local objectSheet            = graphics.newImageSheet(PATHS.path_sheet_commons,sheetCommons)
+local syringeSheet           = graphics.newImageSheet(PATHS.path_sheet_syringes,sheetSyringes)
 
 --global game variables, game states
 local lives = 1
