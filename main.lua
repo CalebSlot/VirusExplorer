@@ -1,5 +1,5 @@
 local composer = require("composer")
-local require_debug = false
+local require_debug = true
 
 display.setStatusBar(display.HiddenStatusBar)
 math.randomseed(os.time())
@@ -8,7 +8,7 @@ audio.reserveChannels( 1 )
 -- Reduce the overall volume of the channel
 audio.setVolume( 0.5, { channel=1 } )
 
-if(requiredebug == true) 
+if(require_debug == true) 
  then
  require("mobdebug").start()
 end

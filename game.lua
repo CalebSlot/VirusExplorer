@@ -3,7 +3,7 @@ local composer      = require( "composer" )
 
 local scene         = composer.newScene()
 
-local build_release    = true
+local build_release    = false
 local ship_body_active = true
 
 local physics       = require("physics")
@@ -40,6 +40,12 @@ local sheetSyringes =
   },
 }
 
+
+local bossLifeUI =
+{
+  INFECTED,
+  NOT_INFECTED,
+}
 local sheetCommons =
 {
     frames =
@@ -189,7 +195,7 @@ local PATHS =
  path_missileExplosion  = "imgs/explosion/explosion_missile.png",
  path_background        = "imgs/background.png",
  path_sheet_commons     = "imgs/gameObjects.png",
- path_sheet_syringes    = "imgs/Syrynge.png",
+ path_sheet_syringes    = "imgs/Syringe.png",
  path_shipExplosion     = "imgs/explosion/explosion_ship.png",
  path_shipAcceleration  = "imgs/flame_sheet.png",
  path_shield            = "imgs/shield_sheet.png",
@@ -210,10 +216,13 @@ local objectSheet            = graphics.newImageSheet(PATHS.path_sheet_commons,s
 local syringeSheet           = graphics.newImageSheet(PATHS.path_sheet_syringes,sheetSyringes)
 
 --global game variables, game states
-local lives = 1
-local score = 0
-local died      = false
-local survived  = false
+local GAME_VARS =
+{
+ lives = 1,
+ score = 0,
+ died      = false,
+ survived  = false,
+}
 --array di virus
 local virusesTable   = {}
 local boss
@@ -381,8 +390,8 @@ local function playFire()
 end
 
 local function addScore(iScore)
-  score = score + iScore
-  scoreText.text = string.format("%07d",score)
+  GAME_VARS.score = GAME_VARS.score + iScore
+  scoreText.text = string.format("%07d",GAME_VARS.score)
  end
 
 local function bgScroll (event)
@@ -820,7 +829,7 @@ rigthMissileFlying.alpha = 1
 	 leftMissileShip.alpha = 1
 	 rigthMissileShip.alpha = 1
 	 ship.isBodyActive = true
-	 died = false
+	 GAME_VARS.died = false
 	end
 	})
    end
@@ -1036,7 +1045,7 @@ end
 --make the transition back tyo the menu and call the hide callback removing all looping stuffs
 local function endGame()
 	--set a global variable
-	composer.setVariable( "finalScore", score )
+	composer.setVariable( "finalScore", GAME_VARS.score )
     composer.gotoScene( gameover_scene, { time=800, effect="crossFade" } )
 end
    --manage  collisione betwenn objects
@@ -1110,7 +1119,7 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
 		  elseif(((obj1.myName == laser_name_1 or obj1.myName == laser_name_2) and obj2.myName == enemy_boss_name_1) or 
 		  (obj1.myName == enemy_boss_name_1 and (obj2.myName == laser_name_1 or obj1.myName == laser_name_2)))
       then
-        if(survived == false and gameEnded == false) 
+        if(GAME_VARS.survived == false and gameEnded == false) 
          then
 
         bossInfo.bossDamage = bossInfo.bossDamage+1
@@ -1126,22 +1135,22 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
       
        if(bossInfo.bossDamage >= bossInfo.bossLife)
                  then
-                  survived  = true
+                  GAME_VARS.survived  = true
                  end
       
       end
 	   elseif((obj1.myName == ship_name_1 and obj2.myName == enemy_name_1) or (obj1.myName == enemy_name_1 and obj2.myName == ship_name_1))
 	   then
-		   if(died == false and gameEnded == false) then
-			   died = true
+		   if(GAME_VARS.died == false and gameEnded == false) then
+			   GAME_VARS.died = true
 
 			    -- Play explosion sound!
                 audio.play( playerDeadSound )
 
-			   lives = lives - 1
+			   GAME_VARS.lives = GAME_VARS.lives - 1
 			 --  livesText.text = message_live_1 .. lives
    
-			   if(lives == 0) then
+			   if(GAME_VARS.lives == 0) then
 
            effectDeadShipAndWeapons()
 				  
@@ -1153,17 +1162,17 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
 		   end
 	   	   elseif((obj1.myName == ship_name_1 and obj2.myName == enemy_boss_name_1) or (obj1.myName == enemy_boss_name_1 and obj2.myName == ship_name_1))
 	   then
-		   if(died == false and gameEnded == false) then
-			   died = true
+		   if(GAME_VARS.died == false and gameEnded == false) then
+			   GAME_VARS.died = true
 
-         lives = lives - 1
+         GAME_VARS.lives = GAME_VARS.lives - 1
 
 			    -- Play explosion sound!
                 audio.play( playerDeadSound )
                  
 			 --  livesText.text = message_live_1 .. lives
    
-			   if(lives == 0) then
+			   if(GAME_VARS.lives == 0) then
 
            effectDeadShipAndWeapons()
 				  
@@ -1175,8 +1184,8 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
 		   end
      	   	   elseif((obj1.myName == ship_name_1 and obj2.myName == enemy_laser_name_1) or (obj1.myName == enemy_laser_name_1 and obj2.myName == ship_name_1))
 	   then
-		   if(died == false and gameEnded == false) then
-			   died = true
+		   if(GAME_VARS.died == false and gameEnded == false) then
+			   GAME_VARS.died = true
 
 			    -- Play explosion sound!
                 audio.play( playerDeadSound )
@@ -1188,10 +1197,10 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
                   break
                  end
 		          	end
-			   lives = lives - 1
+			   GAME_VARS.lives = GAME_VARS.lives - 1
 			 --  livesText.text = message_live_1 .. lives
    
-			   if(lives == 0) then
+			   if(GAME_VARS.lives == 0) then
 
            effectDeadShipAndWeapons()
 				  
@@ -1306,12 +1315,12 @@ local function verifyState(state)
      return true
    end
 
-  if(state == GAME_STATE.GAME_DIED and died == true)
+  if(state == GAME_STATE.GAME_DIED and GAME_VARS.died == true)
    then
      return true
    end
    
-   if(state == GAME_STATE.GAME_SURVIVED and survived == true)
+   if(state == GAME_STATE.GAME_SURVIVED and GAME_VARS.survived == true)
    then
      return true
    end
@@ -1658,20 +1667,29 @@ local options = {
 
 local function updateAntivirus()
   
-  if(antivirusText == nil) 
-  then
-    antivirusText  = display.newText(options)
-    antivirusText:setFillColor( 0, 1, 1 )
+  --if(antivirusText == nil) 
+  --then
+  --  antivirusText  = display.newText(options)
+  --  antivirusText:setFillColor( 0, 1, 1 )
+  --end
+   local bD = 0
+   local halfLife      = bossInfo.bossLife / 2
+   local width_syringe = bossLifeUI.NOT_INFECTED[1].contentWidth
+   local pos = display.contentCenterX - halfLife * width_syringe
+  --local life = ""
+  for i=1,bossInfo.bossDamage do
+    --life = life .. "X"
+    bD = bD + i
+    bossLifeUI.NOT_INFECTED[i].x = pos + bD * width_syringe
+    bossLifeUI.NOT_INFECTED[i].y = 50
   end
-  
-  local life = ""
-  for i=0,bossInfo.bossDamage - 1 do
-    life = life .. "X"
+  for i=1,bossInfo.bossLife - bossInfo.bossDamage do
+   -- life = life .. "-"
+    bD = bD + 1
+    bossLifeUI.NOT_INFECTED[i].x = pos + bD * width_syringe
+    bossLifeUI.NOT_INFECTED[i].y = 50
   end
-  for i=0,bossInfo.bossLife - bossInfo.bossDamage - 1 do
-    life = life .. "-"
-  end
-  antivirusText.text = life
+ -- antivirusText.text = life
 end
 
 local function updateAI()
@@ -1792,6 +1810,20 @@ function scene:create( event )
 	--get the ship image from the objectsheet and place it  in the display
 	--ship         = display.newImageRect( mainGroup, objectSheet, 4, 98, 79 )
 	ship = display.newImageRect( mainGroup, objectSheet,6,98,79)
+  
+
+  bossLifeUI.INFECTED     = {}
+  bossLifeUI.NOT_INFECTED = {}
+  local img = nil
+  for i=0,bossInfo.bossLife - 1 do
+        img = display.newImageRect( uiGroup,syringeSheet,1,35,40)
+              table.insert(bossLifeUI.INFECTED,img)
+        img = display.newImageRect( uiGroup,syringeSheet,2,35,40)
+              table.insert(bossLifeUI.NOT_INFECTED,img)
+  end
+  
+ -- print(#bossLifeUI.INFECTED)
+  
 	createLeftMissile()
 	createRigthMissile()
 
@@ -1856,7 +1888,7 @@ function scene:create( event )
     scorePrefix.x      = endX - (scorePrefix.width / 2 + marginX)
     scorePrefix .y     = avatar.y + avatar.height / 2 + marginY
 
-	scoreText = display.newText(  uiGroup,string.format("%07d",score), 540, scorePrefix .y, native.systemFont, 36, "right")
+	scoreText = display.newText(  uiGroup,string.format("%07d",GAME_VARS.score), 540, scorePrefix .y, native.systemFont, 36, "right")
 
 	heart.x            = startX + marginX + heart.width / 2
 	heart.y            = 30
