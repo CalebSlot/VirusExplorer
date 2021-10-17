@@ -3,7 +3,7 @@ local composer      = require( "composer" )
 
 local scene         = composer.newScene()
 
-local build_release    = false
+local build_release    = true
 local ship_body_active = true
 
 local physics       = require("physics")
@@ -1151,9 +1151,7 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
 			 --  livesText.text = message_live_1 .. lives
    
 			   if(GAME_VARS.lives == 0) then
-
            effectDeadShipAndWeapons()
-				  
 			   else
 				   effectDeadShipAndWeapons()
 				   timer.performWithDelay(1000,effectRestoreShipAndWeapons)
@@ -1163,14 +1161,14 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
 	   	   elseif((obj1.myName == ship_name_1 and obj2.myName == enemy_boss_name_1) or (obj1.myName == enemy_boss_name_1 and obj2.myName == ship_name_1))
 	   then
 		   if(GAME_VARS.died == false and gameEnded == false) then
-			   GAME_VARS.died = true
+			  GAME_VARS.died = true
 
-         GAME_VARS.lives = GAME_VARS.lives - 1
+      --   GAME_VARS.lives = GAME_VARS.lives - 1
 
 			    -- Play explosion sound!
                 audio.play( playerDeadSound )
                  
-			 --  livesText.text = message_live_1 .. lives
+			   livesText.text = message_live_1 .. lives
    
 			   if(GAME_VARS.lives == 0) then
 
@@ -1198,7 +1196,7 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
                  end
 		          	end
 			   GAME_VARS.lives = GAME_VARS.lives - 1
-			 --  livesText.text = message_live_1 .. lives
+			   livesText.text = message_live_1 .. lives
    
 			   if(GAME_VARS.lives == 0) then
 
@@ -1577,7 +1575,7 @@ local function doBossFire()
    if(BOSS_FIRE_MODE == BOSS_FIRE_OPTIONS.BOSS_FIRE_WAVE)
      then
        fireLaserWaveBoss()
-       timer.performWithDelay(300,fireLaserWaveBoss)
+      -- timer.performWithDelay(300,fireLaserWaveBoss)
     elseif(BOSS_FIRE_MODE == BOSS_FIRE_OPTIONS.BOSS_FIRE_LINE)
      then
        fireLaserLineBoss()
@@ -1675,19 +1673,19 @@ local function updateAntivirus()
    local bD = 0
    local halfLife      = bossInfo.bossLife / 2
    local width_syringe = bossLifeUI.NOT_INFECTED[1].contentWidth
-   local pos = display.contentCenterX - halfLife * width_syringe
+   local pos = display.contentCenterX - halfLife * width_syringe - width_syringe / 2
   --local life = ""
   for i=1,bossInfo.bossDamage do
     --life = life .. "X"
-    bD = bD + i
+    bD = bD + 1
     bossLifeUI.NOT_INFECTED[i].x = pos + bD * width_syringe
-    bossLifeUI.NOT_INFECTED[i].y = 50
+    bossLifeUI.NOT_INFECTED[i].y = 40
   end
   for i=1,bossInfo.bossLife - bossInfo.bossDamage do
    -- life = life .. "-"
     bD = bD + 1
-    bossLifeUI.NOT_INFECTED[i].x = pos + bD * width_syringe
-    bossLifeUI.NOT_INFECTED[i].y = 50
+    bossLifeUI.INFECTED[i].x = pos + bD * width_syringe
+    bossLifeUI.INFECTED[i].y = 40
   end
  -- antivirusText.text = life
 end
@@ -1816,9 +1814,9 @@ function scene:create( event )
   bossLifeUI.NOT_INFECTED = {}
   local img = nil
   for i=0,bossInfo.bossLife - 1 do
-        img = display.newImageRect( uiGroup,syringeSheet,1,35,40)
+        img = display.newImageRect( uiGroup,syringeSheet,1,35,45)
               table.insert(bossLifeUI.INFECTED,img)
-        img = display.newImageRect( uiGroup,syringeSheet,2,35,40)
+        img = display.newImageRect( uiGroup,syringeSheet,2,35,45)
               table.insert(bossLifeUI.NOT_INFECTED,img)
   end
   
