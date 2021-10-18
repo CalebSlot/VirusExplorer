@@ -2,9 +2,10 @@
 local composer      = require( "composer" )
 
 local scene         = composer.newScene()
-
-local build_release    = true
-local ship_body_active = true
+--if false jump to monster
+local build_release    = false
+--usefull for debug, invincible
+local ship_body_active = false
 
 local physics       = require("physics")
 
@@ -1679,13 +1680,13 @@ local function updateAntivirus()
     --life = life .. "X"
     bD = bD + 1
     bossLifeUI.NOT_INFECTED[i].x = pos + bD * width_syringe
-    bossLifeUI.NOT_INFECTED[i].y = 40
+    bossLifeUI.NOT_INFECTED[i].y = 33
   end
   for i=1,bossInfo.bossLife - bossInfo.bossDamage do
    -- life = life .. "-"
     bD = bD + 1
     bossLifeUI.INFECTED[i].x = pos + bD * width_syringe
-    bossLifeUI.INFECTED[i].y = 40
+    bossLifeUI.INFECTED[i].y = 34
   end
  -- antivirusText.text = life
 end
@@ -1814,9 +1815,9 @@ function scene:create( event )
   bossLifeUI.NOT_INFECTED = {}
   local img = nil
   for i=0,bossInfo.bossLife - 1 do
-        img = display.newImageRect( uiGroup,syringeSheet,1,35,45)
+        img = display.newImageRect( uiGroup,syringeSheet,1,29,29*2.39)
               table.insert(bossLifeUI.INFECTED,img)
-        img = display.newImageRect( uiGroup,syringeSheet,2,35,45)
+        img = display.newImageRect( uiGroup,syringeSheet,2,29,29*2.39)
               table.insert(bossLifeUI.NOT_INFECTED,img)
   end
   
