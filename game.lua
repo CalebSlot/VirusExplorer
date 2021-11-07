@@ -9,7 +9,7 @@ local ship_body_active = false
 
 local physics       = require("physics")
 
-
+local font      = require("font")
 
 physics.start()
 
@@ -18,6 +18,17 @@ physics.setGravity(0,0)
 
 local fieldRadius = 120
 local fieldPower  = 0.4
+
+local fontTimerOptions =
+{
+   active = false,
+   tm     = 0,
+   idx    = 0,
+   line   = 0,
+   fontChars = {},
+   strlen,
+}
+
 
 --TODO: finish this data type.....
 local sheetSyringes =
@@ -210,6 +221,7 @@ local PATHS =
  path_heart             = "imgs/heart.png",
  path_avatar            = "imgs/esplorando-il-corpo-umano.png",
  path_boss              = "imgs/CV_boss.png",
+ path_popup             = "imgs/popup_menu_backgrounded.png",
 
 }
 --load the sheets  
@@ -223,11 +235,19 @@ local GAME_VARS =
  score = 0,
  died      = false,
  survived  = false,
+ popped = false
 }
 --array di virus
 local virusesTable   = {}
 local boss
-local avatar
+local STATIC_IMGS =
+{
+   avatar,
+   popup,
+   scorePrefix,
+   heart,
+	 hourglass,
+}
 --array di laser
 local lasersTable    = {}
 
@@ -248,13 +268,13 @@ local gameLoopTimer
 local livesText
 local scoreText
 local antivirusText
-local scorePrefix
+--local scorePrefix
 local timeText
 local backGroup
 local mainGroup
 local uiGroup
-local heart
-local hourglass
+--local heart
+--local hourglass
 local shield
 local enemyDeadSound
 local playerDeadSound
@@ -1593,9 +1613,9 @@ local function doGameOverSurvived()
           physics.pause()
         
            display.remove(ship)
-				   display.remove(heart)
-				   display.remove(hourglass)
-				   display.remove(avatar)
+				   display.remove(STATIC_IMGS.heart)
+				   display.remove(STATIC_IMGS.hourglass)
+				   display.remove(STATIC_IMGS.avatar)
 
 				   if(leftMissileDestroyed == false) then
 				  	display.remove(leftMissileShip)
@@ -1604,10 +1624,10 @@ local function doGameOverSurvived()
 				   if(rigthMissileDestroyed == false) then
 				    display.remove(rigthMissileShip)
 				   end
-display.remove(scorePrefix)
+display.remove(STATIC_IMGS.scorePrefix)
 display.remove(livesText)
 display.remove(scoreText)
-display.remove(scorePrefix)
+--display.remove(scorePrefix)
 display.remove(antivirusText)
 display.remove(timeText)
 display.remove(uiGroup)
@@ -1623,9 +1643,9 @@ local function doGameOverDied()
           physics.pause()
         
            display.remove(ship)
-				   display.remove(heart)
-				   display.remove(hourglass)
-				   display.remove(avatar)
+				   display.remove(STATIC_IMGS.heart)
+				   display.remove(STATIC_IMGS.hourglass)
+				   display.remove(STATIC_IMGS.avatar)
 
 				   if(leftMissileDestroyed == false) then
 				  	display.remove(leftMissileShip)
@@ -1634,10 +1654,9 @@ local function doGameOverDied()
 				   if(rigthMissileDestroyed == false) then
 				    display.remove(rigthMissileShip)
 				   end
-display.remove(scorePrefix)
+display.remove(STATIC_IMGS.scorePrefix)
 display.remove(livesText)
 display.remove(scoreText)
-display.remove(scorePrefix)
 display.remove(antivirusText)
 display.remove(timeText)
 display.remove(uiGroup)
@@ -1691,6 +1710,70 @@ local function updateAntivirus()
  -- antivirusText.text = life
 end
 
+
+
+
+
+local function showStringDelayed()--(delayMS)
+  
+  if(fontTimerOptions.active == false)
+  then
+    return
+  end
+  
+ -- fontTimerOptions.tm = fontTimerOptions.tm + deltaTime
+  
+ -- if(fontTimerOptions.tm >= delayMS)
+ -- then
+ --    fontTimerOptions.tm = 0
+ -- end
+  
+
+  if (fontTimerOptions.idx == fontTimerOptions.len) then
+       fontTimerOptions.idx    = 0
+       fontTimerOptions.active = false
+   --    fontTimerOptions.tm     = 0
+       timer.cancel(fontTimerOptions.tm)
+       
+       local remover = function()
+        for cI = 1,#fontTimerOptions.fontChars do
+         display.remove(fontTimerOptions.fontChars[cI])
+        end
+        fontTimerOptions.fontChars = {}
+        display.remove(STATIC_IMGS.popup)
+        timer.cancel(fontTimerOptions.tm)
+       end
+       
+       fontTimerOptions.tm = timer.performWithDelay(500,remover)
+       
+      return
+  end
+      
+
+      fontTimerOptions.fontChars[fontTimerOptions.idx + 1].alpha = 1
+      fontTimerOptions.idx = fontTimerOptions.idx + 1
+      
+
+end
+
+
+local function placePopup(delay)
+  
+    if(GAME_VARS.popped == false)
+    then
+    STATIC_IMGS.popup.x            = (display.contentWidth - display.viewableContentWidth) / 2 + display.actualContentWidth / 2
+    STATIC_IMGS.popup.y            = display.actualContentHeight / 2
+    STATIC_IMGS.popup.alpha        = 1
+    fontTimerOptions.active        = true
+    GAME_VARS.popped = true
+    fontTimerOptions.tm = timer.performWithDelay(delay,showStringDelayed,-1)
+   end
+  
+   --showStringDelayed(delay)
+   
+end
+
+
 local function updateAI()
 
      updateStateOnce(GAME_STATE.GAME_PLAYING)
@@ -1703,10 +1786,12 @@ local function updateAI()
      if(verifyState(GAME_STATE.GAME_SPAWNING))
      then
          createViruses() 
+        
      end
 
     if(verifyState(GAME_STATE.GAME_BOSS_SPAWNING))
       then
+         placePopup(150)
          updateStateOnce(GAME_STATE.GAME_BOSS)
      		 createBossWithTransition(bossInfo.BOSS_HEIGTH/2,SECONDS_TRANSITION_BOSS * 1000,bossBefore,bossAfter)
       end
@@ -1745,6 +1830,9 @@ local function updateAI()
 end
 
 
+
+
+
 local function gameLoop()
 	
   updateStateOnce(GAME_START_LOOP)
@@ -1763,6 +1851,7 @@ local function gameLoop()
 
 
    end
+
 
 
 -- -----------------------------------------------------------------------------------
@@ -1867,11 +1956,12 @@ function scene:create( event )
 	timeText  = display.newText( uiGroup, message_time_1 .. 19 - gameplayTime,  200, 80, native.systemFont, 36 )
 	--scorePrefix = display.newText( uiGroup,message_score_1, display.contentWidth - 250, 80, native.systemFont, 36 )
 	
-	scorePrefix = display.newImageRect(uiGroup,PATHS.path_score,35,35)
-	heart       = display.newImageRect(uiGroup,PATHS.path_heart,35,29)
-	hourglass   = display.newImageRect(uiGroup,PATHS.path_hourglass,37,37)
-	avatar      = display.newImageRect(uiGroup,PATHS.path_avatar,57*1.5,43*1.5)
-    
+	STATIC_IMGS.scorePrefix = display.newImageRect(uiGroup,PATHS.path_score,35,35)
+	STATIC_IMGS.heart       = display.newImageRect(uiGroup,PATHS.path_heart,35,29)
+	STATIC_IMGS.hourglass   = display.newImageRect(uiGroup,PATHS.path_hourglass,37,37)
+	STATIC_IMGS.avatar      = display.newImageRect(uiGroup,PATHS.path_avatar,57*1.5,43*1.5)
+  STATIC_IMGS.popup       = display.newImageRect(uiGroup,PATHS.path_popup,260*2,135*2)  
+  STATIC_IMGS.popup.alpha = 0
     --shield      = display.newImageRect(uiGroup,PATHS.path_shield,170,170)
            sheet_shield            = graphics.newImageSheet( PATHS.path_shield, sheetAnimationOptionsShield)
            shield = display.newSprite( mainGroup,sheet_shield, sequences_shield)
@@ -1881,18 +1971,25 @@ function scene:create( event )
            physics.addBody( shield, "static",{ radius=140, isSensor=true } )
 
     placeShield()
+    
+    local message = "HELLO! I'M THECHIEF OF YOUR ANTIVIRUS SYSTEM. LET'S KILL THEM ALL!"
+    fontTimerOptions.len                     = message:len()
+    fontTimerOptions.fontChars               = font:showStringMultiline(message,uiGroup,14,display.contentCenterX,display.contentCenterY - STATIC_IMGS.popup.height / 2 + 60,40);
+    for cI = 1,#fontTimerOptions.fontChars do
+        fontTimerOptions.fontChars[cI].alpha = 0
+    end
+    
+    STATIC_IMGS.avatar.x           = endX - (STATIC_IMGS.avatar.width / 2)
+    STATIC_IMGS.avatar.y           = 30
+    STATIC_IMGS.scorePrefix.x      = endX - (STATIC_IMGS.scorePrefix.width / 2 + marginX)
+    STATIC_IMGS.scorePrefix .y     = STATIC_IMGS.avatar.y + STATIC_IMGS.avatar.height / 2 + marginY
 
-    avatar.x           = endX - (avatar.width / 2)
-    avatar.y           = 30
-    scorePrefix.x      = endX - (scorePrefix.width / 2 + marginX)
-    scorePrefix .y     = avatar.y + avatar.height / 2 + marginY
+	scoreText = display.newText(  uiGroup,string.format("%07d",GAME_VARS.score), 540 - STATIC_IMGS.scorePrefix.width / 2, STATIC_IMGS.scorePrefix .y, native.systemFont, 36, "right")
 
-	scoreText = display.newText(  uiGroup,string.format("%07d",GAME_VARS.score), 540, scorePrefix .y, native.systemFont, 36, "right")
-
-	heart.x            = startX + marginX + heart.width / 2
-	heart.y            = 30
-	hourglass.x        = startX + marginX + hourglass.width / 2
-	hourglass.y        = 80
+	STATIC_IMGS.heart.x            = startX + marginX + STATIC_IMGS.heart.width / 2
+	STATIC_IMGS.heart.y            = 30
+	STATIC_IMGS.hourglass.x        = startX + marginX + STATIC_IMGS.hourglass.width / 2
+	STATIC_IMGS.hourglass.y        = 80
 
 	ship:addEventListener(laser_event,fireLaser)
 	ship:addEventListener(move_event,dragShip)
@@ -1924,7 +2021,6 @@ function scene:show( event )
 
 	if ( phase == "will" ) then
 		-- Code here runs when the scene is still off screen (but is about to come on screen)
-
 	elseif ( phase == "did" ) then
 		-- Code here runs when the scene is entirely on screen
 		
