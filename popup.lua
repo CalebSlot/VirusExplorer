@@ -20,7 +20,7 @@ function popup:create(background,width,height,sound,speed,wait,uiGroup,message,c
   self.fontTimerOptions.wait        = wait
   
   self.fontTimerOptions.popup            = display.newImageRect(uiGroup,background,width,height)  
-  self.fontTimerOptions.popup.isVisibile = false
+  self.fontTimerOptions.popup.isVisible  = false
   self.fontTimerOptions.sound            = audio.loadSound(sound)
   self.fontTimerOptions.len              = message:len()
   self.fontTimerOptions.fontChars = font:showStringMultiline(message,uiGroup,charsForLine,display.contentCenterX,display.contentCenterY - self.fontTimerOptions.popup.height / 2 + 60,40);
@@ -61,6 +61,8 @@ function popup:show()
         self.fontTimerOptions.fontChars = {}
         display.remove(self.fontTimerOptions.popup)
         timer.cancel(self.fontTimerOptions.tm)
+   
+        self.fontTimerOptions.popped  = false
        end
        
        self.fontTimerOptions.tm = timer.performWithDelay(self.fontTimerOptions.wait,remover)
@@ -69,7 +71,7 @@ function popup:show()
   end
       
 
-      self.fontTimerOptions.fontChars[self.fontTimerOptions.idx + 1].alpha = 1
+      self.fontTimerOptions.fontChars[self.fontTimerOptions.idx + 1].isVisible = true
       audio.play(self.fontTimerOptions.sound,{duration = self.fontTimerOptions.speed})
       self.fontTimerOptions.idx = self.fontTimerOptions.idx + 1
       

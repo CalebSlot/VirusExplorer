@@ -8,8 +8,8 @@ local ship_body_active = false
 local physics          = require("physics")
 local font             = require("font")
 local popup            = require("popup")
-physics.start()
 
+physics.start()
 physics.setGravity(0,0)
 
 
@@ -233,8 +233,7 @@ local GAME_VARS =
  lives = 1,
  score = 0,
  died      = false,
- survived  = false,
- popped = false
+ survived  = false
 }
 --array di virus
 local virusesTable   = {}
@@ -242,7 +241,6 @@ local boss
 local STATIC_IMGS =
 {
    avatar,
-   popup,
    scorePrefix,
    heart,
 	 hourglass,
@@ -282,7 +280,6 @@ local GAME_SOUNDS =
   enemyDeadSound,
   playerDeadSound,
   fireLaserSound,
-  keyStrokeSound,
   musicTrack,
 }
 --fire variable
@@ -1717,70 +1714,6 @@ local function updateAntivirus()
 end
 
 
-
-
-
-local function showStringDelayed()--(delayMS)
-  
-  if(fontTimerOptions.active == false)
-  then
-    return
-  end
-  
- -- fontTimerOptions.tm = fontTimerOptions.tm + deltaTime
-  
- -- if(fontTimerOptions.tm >= delayMS)
- -- then
- --    fontTimerOptions.tm = 0
- -- end
-  
-
-  if (fontTimerOptions.idx == fontTimerOptions.len) then
-       fontTimerOptions.idx    = 0
-       fontTimerOptions.active = false
-   --    fontTimerOptions.tm     = 0
-       timer.cancel(fontTimerOptions.tm)
-       
-       local remover = function()
-        for cI = 1,#fontTimerOptions.fontChars do
-         display.remove(fontTimerOptions.fontChars[cI])
-        end
-        fontTimerOptions.fontChars = {}
-        display.remove(STATIC_IMGS.popup)
-        timer.cancel(fontTimerOptions.tm)
-       end
-       
-       fontTimerOptions.tm = timer.performWithDelay(fontTimerOptions.wait,remover)
-       
-      return
-  end
-      
-
-      fontTimerOptions.fontChars[fontTimerOptions.idx + 1].alpha = 1
-      audio.play(GAME_SOUNDS.keyStrokeSound,{duration = 300})
-      fontTimerOptions.idx = fontTimerOptions.idx + 1
-      
-
-end
-
-
-local function placePopup()
-  
-    if(GAME_VARS.popped == false)
-    then
-    STATIC_IMGS.popup.x            = (display.contentWidth - display.viewableContentWidth) / 2 + display.actualContentWidth / 2
-    STATIC_IMGS.popup.y            = display.actualContentHeight / 2
-    STATIC_IMGS.popup.alpha        = 1
-    fontTimerOptions.active        = true
-    GAME_VARS.popped = true
-    fontTimerOptions.tm = timer.performWithDelay(fontTimerOptions.speed,showStringDelayed,-1)
-   end
-  
-   --showStringDelayed(delay)
-   
-end
-
-
 local function updateAI()
 
      updateStateOnce(GAME_STATE.GAME_PLAYING)
@@ -1798,7 +1731,7 @@ local function updateAI()
 
     if(verifyState(GAME_STATE.GAME_BOSS_SPAWNING))
       then
-         placePopup(150)
+         popup:show()
          updateStateOnce(GAME_STATE.GAME_BOSS)
      		 createBossWithTransition(bossInfo.BOSS_HEIGTH/2,SECONDS_TRANSITION_BOSS * 1000,bossBefore,bossAfter)
       end
@@ -1967,8 +1900,7 @@ function scene:create( event )
 	STATIC_IMGS.heart       = display.newImageRect(uiGroup,PATHS.path_heart,35,29)
 	STATIC_IMGS.hourglass   = display.newImageRect(uiGroup,PATHS.path_hourglass,37,37)
 	STATIC_IMGS.avatar      = display.newImageRect(uiGroup,PATHS.path_avatar,57*1.5,43*1.5)
-  STATIC_IMGS.popup       = display.newImageRect(uiGroup,PATHS.path_popup,260*2,135*2)  
-  STATIC_IMGS.popup.alpha = 0
+
     --shield      = display.newImageRect(uiGroup,PATHS.path_shield,170,170)
            sheet_shield            = graphics.newImageSheet( PATHS.path_shield, sheetAnimationOptionsShield)
            shield = display.newSprite( mainGroup,sheet_shield, sequences_shield)
@@ -1980,13 +1912,7 @@ function scene:create( event )
     placeShield()
     
     local message = "HELLO! I'M THECHIEF OF YOUR ANTIVIRUS SYSTEM. LET'S KILL THEM ALL!"
-    fontTimerOptions.len                     = message:len()
-    fontTimerOptions.fontChars               = font:showStringMultiline(message,uiGroup,14,display.contentCenterX,display.contentCenterY - STATIC_IMGS.popup.height / 2 + 60,40);
-    for cI = 1,#fontTimerOptions.fontChars do
-        fontTimerOptions.fontChars[cI].alpha = 0
-    end
-    
-   -- popup
+    popup:create(PATHS.path_popup,260*2,135*2,PATHS.path_keystroke,150,300,uiGroup,message,14)
     
     
     STATIC_IMGS.avatar.x           = endX - (STATIC_IMGS.avatar.width / 2)
@@ -2083,7 +2009,7 @@ function scene:destroy( event )
  audio.dispose( GAME_SOUNDS.enemyDeadSound )
  audio.dispose( GAME_SOUNDS.fireLaserSound )
  audio.dispose( GAME_SOUNDS.musicTrack)
- audio.dispose( GAME_SOUNDS.keyStrokeSound)
+ popup:destroy()
 end
 
 
