@@ -13,6 +13,8 @@ popup.fontTimerOptions =
    sound,
    fontChars = {},
    len,
+   onEnter,
+   onExit,
 }
 
 function popup:create(background,width,height,sound,speed,wait,uiGroup,message,charsForLine)
@@ -32,14 +34,20 @@ function popup:create(background,width,height,sound,speed,wait,uiGroup,message,c
   
 end
 
-function popup:show()
+function popup:show(onEnter,onExit)
  if(self.fontTimerOptions.popped == false)
     then
+    self.fontTimerOptions.onEnter = onEnter
+    self.fontTimerOptions.onExit  = onExit
     self.fontTimerOptions.popup.x            = (display.contentWidth - display.viewableContentWidth) / 2 + display.actualContentWidth / 2
     self.fontTimerOptions.popup.y            = display.actualContentHeight / 2
+    self.fontTimerOptions.popup.alpha        = 0
     self.fontTimerOptions.popup.isVisible    = true
     self.fontTimerOptions.active             = true
     self.fontTimerOptions.popped             = true
+   
+ 
+    transition.fadeIn( self.fontTimerOptions.popup , { time=500 } )
     
     local showStringDelayed = function()
       
@@ -57,12 +65,15 @@ function popup:show()
        local remover = function()
         for cI = 1,#self.fontTimerOptions.fontChars do
          display.remove(self.fontTimerOptions.fontChars[cI])
+         --todo: add recycle
         end
         self.fontTimerOptions.fontChars = {}
+        self.fontTimerOptions.len = 0
         display.remove(self.fontTimerOptions.popup)
         timer.cancel(self.fontTimerOptions.tm)
    
         self.fontTimerOptions.popped  = false
+        self.fontTimerOptions.onExit()
        end
        
        self.fontTimerOptions.tm = timer.performWithDelay(self.fontTimerOptions.wait,remover)
@@ -70,16 +81,13 @@ function popup:show()
       return
   end
       
-
       self.fontTimerOptions.fontChars[self.fontTimerOptions.idx + 1].isVisible = true
       audio.play(self.fontTimerOptions.sound,{duration = self.fontTimerOptions.speed})
       self.fontTimerOptions.idx = self.fontTimerOptions.idx + 1
-      
-      
+
     end
     
-    
-    
+    self.fontTimerOptions.onEnter()
     self.fontTimerOptions.tm = timer.performWithDelay(self.fontTimerOptions.speed,showStringDelayed,-1)
    end
 end

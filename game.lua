@@ -2,7 +2,7 @@
 local composer         = require( "composer" )
 local scene            = composer.newScene()
 --if false jump to monster
-local build_release    = false
+local build_release    = true
 --usefull for debug, invincible
 local ship_body_active = false
 local physics          = require("physics")
@@ -1303,29 +1303,39 @@ end
 
 local GAME_STATE =
 {
-  GAME_START_LOOP    = 1,
-  GAME_PLAYING       = 2,
-  GAME_SPAWNING      = 3,
-  GAME_BOSS_SPAWNING = 4,
-  GAME_BOSS          = 5,
-  GAME_DIED          = 6,
-  GAME_SURVIVED      = 7,
-  GAME_TIMEOUT       = 8
+  GAME_START_LOOP       = 1,
+  GAME_PLAYING          = 2,
+  GAME_SPAWNING         = 3,
+  GAME_BOSS_SPAWNING    = 4,
+  GAME_BOSS             = 5,
+  GAME_DIED             = 6,
+  GAME_SURVIVED         = 7,
+  GAME_TIMEOUT          = 8,
+  GAME_CUTSCENE_1_ENTER = 9,
+  GAME_CUTSCENE_1_EXIT   = 10,
+  GAME_CUTSCENE_1_PLAYING = 11,
 }
-local b_GAME_START_LOOP = false
-local b_GAME_PLAYING    = false
-local b_GAME_SPAWNING   = false
-local b_GAME_BOSS       = false
-
+local GAME_STATE_EXECUTED =
+{
+ b_GAME_START_LOOP       = false,
+ b_GAME_PLAYING          = false,
+ b_GAME_SPAWNING         = false,
+ b_GAME_BOSS             = false,
+ b_GAME_CUTSCENE_1_ENTER = false,
+ b_GAME_CUTSCENE_1_PLAYING  = false,
+ b_GAME_CUTSCENE_1_EXIT  = false,
+}
 local game_state = 0
 
 local function verifyState(state)
   
   
   
+  
   if(game_state == state) then
   	return true
   end
+
 
   if(state == GAME_STATE.GAME_PLAYING and gameplayTime<=thresholdSpawning)
   then
@@ -1355,33 +1365,50 @@ local function verifyState(state)
   return false
 end
 
-local function updateStateOnce(state)
+local next_state
+
+local function updateStateOnce(state,nextState)
   if(verifyState(state) == true)
    then
   	return
    end
-
-      if(state == GAME_STATE.GAME_START_LOOP and b_GAME_START_LOOP == false)
+      if(state == GAME_STATE.GAME_CUTSCENE_1_ENTER and GAME_STATE_EXECUTED.b_GAME_CUTSCENE_1_ENTER == false) then
+       game_state     = state
+       GAME_STATE_EXECUTED.b_GAME_CUTSCENE_1_ENTER = true
+       return
+      end
+       if(state == GAME_STATE.GAME_CUTSCENE_1_EXIT and GAME_STATE_EXECUTED.b_GAME_CUTSCENE_1_EXIT == false) then
+        game_state     = state
+        GAME_STATE_EXECUTED.b_GAME_CUTSCENE_1_EXIT = true
+       return
+      end
+      if(state == GAME_STATE.GAME_START_LOOP and GAME_STATE_EXECUTED.b_GAME_START_LOOP == false)
      	then
-          b_GAME_START_LOOP = true
+          GAME_STATE_EXECUTED.b_GAME_START_LOOP = true
           game_state = state
           return
         end
-      if(state == GAME_STATE.GAME_PLAYING and b_GAME_PLAYING == false)
+         if(state == GAME_STATE.GAME_CUTSCENE_1_PLAYING and GAME_STATE_EXECUTED.b_GAME_CUTSCENE_1_PLAYING == false)
      	then
-   	      b_GAME_PLAYING = true
+          GAME_STATE_EXECUTED.b_GAME_CUTSCENE_1_PLAYING = true
           game_state = state
           return
         end
-      if(state == GAME_STATE.GAME_SPAWNING and b_GAME_SPAWNING == false)
+      if(state == GAME_STATE.GAME_PLAYING and GAME_STATE_EXECUTED.b_GAME_PLAYING == false)
+     	then
+   	      GAME_STATE_EXECUTED.b_GAME_PLAYING = true
+          game_state = state
+          return
+        end
+      if(state == GAME_STATE.GAME_SPAWNING and GAME_STATE_EXECUTED.b_GAME_SPAWNING == false)
    	    then
-   	      b_GAME_SPAWNING  = true
+   	      GAME_STATE_EXECUTED.b_GAME_SPAWNING  = true
           game_state = state
           return
         end
-      if(state == GAME_STATE.GAME_BOSS and b_GAME_BOSS == false)
+      if(state == GAME_STATE.GAME_BOSS and GAME_STATE_EXECUTED.b_GAME_BOSS == false)
      	then
-     	  b_GAME_BOSS  = true
+     	    GAME_STATE_EXECUTED.b_GAME_BOSS  = true
           game_state = state
           return
         end
@@ -1714,28 +1741,65 @@ local function updateAntivirus()
 end
 
 
+local function cutsceneEnter()
+  --maybe physics too
+  --dependen on the scene
+   pauseTime()
+   pausePlayerMovements()
+   pauseFire()
+end
+
+local function cutsceneExit()
+   playTime()
+   playPlayerMovements()
+   playFire()
+   updateStateOnce(GAME_STATE.GAME_CUTSCENE_1_EXIT)
+end
+
+
 local function updateAI()
 
      updateStateOnce(GAME_STATE.GAME_PLAYING)
 
 		 if (verifyState(GAME_STATE.GAME_PLAYING)) 
 		 then
-		     updateStateOnce(GAME_STATE.GAME_SPAWNING)
+       
+         --common behaviour here
+         
+         
+         updateStateOnce(GAME_STATE.GAME_CUTSCENE_1_ENTER)
      end
      
+     --1 CUTSCENE
+     if (verifyState(GAME_STATE.GAME_CUTSCENE_1_ENTER)) 
+		 then
+         updateStateOnce(GAME_STATE.GAME_CUTSCENE_1_PLAYING)
+         popup:show(cutsceneEnter,cutsceneExit)
+     end
+     if (verifyState(GAME_STATE.GAME_CUTSCENE_1_PLAYING)) 
+		 then
+        return
+     end
+     if (verifyState(GAME_STATE.GAME_CUTSCENE_1_EXIT)) 
+		 then
+         updateStateOnce(GAME_STATE.GAME_SPAWNING)
+     end
+     
+     
+     --START YOUR VOYAGE 
      if(verifyState(GAME_STATE.GAME_SPAWNING))
      then
          createViruses() 
-        
      end
-
+     
+     --BOSS??
     if(verifyState(GAME_STATE.GAME_BOSS_SPAWNING))
       then
-         popup:show()
          updateStateOnce(GAME_STATE.GAME_BOSS)
      		 createBossWithTransition(bossInfo.BOSS_HEIGTH/2,SECONDS_TRANSITION_BOSS * 1000,bossBefore,bossAfter)
       end
 
+     --FIGHT THE FINAL BASTARD
     if(verifyState(GAME_STATE.GAME_BOSS))
        	 then
                 updateAntivirus()
@@ -1747,7 +1811,7 @@ local function updateAI()
                  end
        	 end
        
-       
+     --END OF YOUR VOYAGE
      if(verifyState(GAME_STATE.GAME_SURVIVED))
        then
          doGameOverSurvived()
