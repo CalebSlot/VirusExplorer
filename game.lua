@@ -262,7 +262,7 @@ local firingLeftMissile
 local rigthMissileDestroyed
 local firingRigthMissile
 local gameLoopTimer
-local livesText
+--local livesText
 local scoreText
 local antivirusText
 --local scorePrefix
@@ -319,8 +319,8 @@ local move_event           = "touch"
 local ship_name_1          = "ship"
 local missile_name_left_1  = "missile_left"
 local missile_name_rigth_1 = "missile_rigth"
-local message_live_rip     = "R.I.P"
-local message_live_1       = "Lives: "
+--local message_live_rip     = "R.I.P"
+--local message_live_1       = "Lives: "
 local message_score_1      = "Score: "
 local message_time_1       = "  "
 local message_time_2       = " 0"
@@ -1192,7 +1192,7 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
 			    -- Play explosion sound!
                 audio.play( GAME_SOUNDS.playerDeadSound )
                  
-			   livesText.text = message_live_1 .. lives
+			  -- livesText.text = message_live_1 .. lives
    
 			   if(GAME_VARS.lives == 0) then
 
@@ -1220,7 +1220,7 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
                  end
 		          	end
 			   GAME_VARS.lives = GAME_VARS.lives - 1
-			   livesText.text = message_live_1 .. lives
+			   --livesText.text = message_live_1 .. lives
    
 			   if(GAME_VARS.lives == 0) then
 
@@ -1655,7 +1655,7 @@ local function doGameOverSurvived()
 				    display.remove(rigthMissileShip)
 				   end
 display.remove(STATIC_IMGS.scorePrefix)
-display.remove(livesText)
+--display.remove(livesText)
 display.remove(scoreText)
 --display.remove(scorePrefix)
 display.remove(antivirusText)
@@ -1685,7 +1685,7 @@ local function doGameOverDied()
 				    display.remove(rigthMissileShip)
 				   end
 display.remove(STATIC_IMGS.scorePrefix)
-display.remove(livesText)
+--display.remove(livesText)
 display.remove(scoreText)
 display.remove(antivirusText)
 display.remove(timeText)
