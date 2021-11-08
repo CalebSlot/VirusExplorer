@@ -21,8 +21,15 @@ function popup:create(background,width,height,sound,speed,wait,uiGroup,message,c
   
   self.fontTimerOptions.popup            = display.newImageRect(uiGroup,background,width,height)  
   self.fontTimerOptions.popup.isVisibile = false
-  popup.fontTimerOptions.sound                = audio.loadSound(sound)
+  self.fontTimerOptions.sound            = audio.loadSound(sound)
+  self.fontTimerOptions.len              = message:len()
   self.fontTimerOptions.fontChars = font:showStringMultiline(message,uiGroup,charsForLine,display.contentCenterX,display.contentCenterY - self.fontTimerOptions.popup.height / 2 + 60,40);
+  
+    for cI = 1,#self.fontTimerOptions.fontChars do
+        self.fontTimerOptions.fontChars[cI].isVisible = false
+    end
+  
+  
 end
 
 function popup:show()

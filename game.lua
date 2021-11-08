@@ -7,7 +7,7 @@ local build_release    = false
 local ship_body_active = false
 local physics          = require("physics")
 local font             = require("font")
-
+local popup            = require("popup")
 physics.start()
 
 physics.setGravity(0,0)
@@ -1985,6 +1985,9 @@ function scene:create( event )
     for cI = 1,#fontTimerOptions.fontChars do
         fontTimerOptions.fontChars[cI].alpha = 0
     end
+    
+   -- popup
+    
     
     STATIC_IMGS.avatar.x           = endX - (STATIC_IMGS.avatar.width / 2)
     STATIC_IMGS.avatar.y           = 30
