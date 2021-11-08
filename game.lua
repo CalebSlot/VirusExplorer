@@ -1,15 +1,12 @@
 
-local composer      = require( "composer" )
-
-local scene         = composer.newScene()
+local composer         = require( "composer" )
+local scene            = composer.newScene()
 --if false jump to monster
 local build_release    = false
 --usefull for debug, invincible
 local ship_body_active = false
-
-local physics       = require("physics")
-
-local font      = require("font")
+local physics          = require("physics")
+local font             = require("font")
 
 physics.start()
 
@@ -22,11 +19,12 @@ local fieldPower  = 0.4
 local fontTimerOptions =
 {
    active = false,
-   tm     = 0,
+   tm     = nil,
    idx    = 0,
-   line   = 0,
+   speed  = 150,
+   wait   = 300,
    fontChars = {},
-   strlen,
+   len,
 }
 
 
@@ -216,6 +214,7 @@ local PATHS =
  path_pickup            = "imgs/pickup_beam.png",
  path_explosion         = "audio/explosion.wav",
  path_fire              = "audio/fire.wav",
+ path_keystroke         = "audio/typewriter-key-1.wav",
  path_track             = "audio/80s-Space-Game_Looping.wav",
  path_hourglass         = "imgs/clessidra.png",
  path_heart             = "imgs/heart.png",
@@ -276,10 +275,16 @@ local uiGroup
 --local heart
 --local hourglass
 local shield
-local enemyDeadSound
-local playerDeadSound
-local fireLaserSound
-local musicTrack
+
+
+local GAME_SOUNDS =
+{
+  enemyDeadSound,
+  playerDeadSound,
+  fireLaserSound,
+  keyStrokeSound,
+  musicTrack,
+}
 --fire variable
 local lastFireSide
 local shieldVisible = true
@@ -447,10 +452,11 @@ local function placeShield()
 end
 
 local function loadAudio()
-	enemyDeadSound  = audio.loadSound( PATHS.path_explosion )
-	playerDeadSound = audio.loadSound( PATHS.path_explosion )
-	fireLaserSound  = audio.loadSound( PATHS.path_fire )
-	musicTrack      = audio.loadStream( PATHS.path_track)
+	GAME_SOUNDS.enemyDeadSound  = audio.loadSound(PATHS.path_explosion)
+	GAME_SOUNDS.playerDeadSound = audio.loadSound(PATHS.path_explosion)
+	GAME_SOUNDS.fireLaserSound  = audio.loadSound(PATHS.path_fire)
+	GAME_SOUNDS.musicTrack      = audio.loadStream(PATHS.path_track)
+  GAME_SOUNDS.keyStrokeSound  = audio.loadSound(PATHS.path_keystroke)
 end
 -- place missiles
 local function placeMissiles()
@@ -627,7 +633,7 @@ local function fireLaser()
 
 	--load the laser
     -- Play fire sound!
-    audio.play( fireLaserSound )
+    audio.play( GAME_SOUNDS.fireLaserSound )
 
 	local newLaser = display.newImageRect(mainGroup,objectSheet,2,14,40)
 	table.insert(lasersTable,newLaser) 
@@ -884,7 +890,7 @@ local function effectDeadShipAndWeapons()
 
          shipExplosion:addEventListener( "sprite", mySpriteListener )         		  		   
            -- Play explosion sound!
-		 audio.play( enemyDeadSound )
+		 audio.play( GAME_SOUNDS.enemyDeadSound )
 
 end
 
@@ -920,7 +926,7 @@ end
 
          laserExplosion:addEventListener( "sprite", mySpriteListener )         		  		   
            -- Play explosion sound!
-		 audio.play( enemyDeadSound )
+		 audio.play( GAME_SOUNDS.enemyDeadSound )
 end
 local shieldPower = 4
 
@@ -973,7 +979,7 @@ if(obj2.myName == enemy_name_1)
 
          shieldExplosion:addEventListener( "sprite", mySpriteListener )         		  		   
            -- Play explosion sound!
-		 audio.play( enemyDeadSound )
+		 audio.play( GAME_SOUNDS.enemyDeadSound )
 end
 
 local function explodeAndRemove(obj)
@@ -997,7 +1003,7 @@ local function explodeAndRemove(obj)
 
          laserExplosion:addEventListener( "sprite", mySpriteListener )         		  		   
            -- Play explosion sound!
-		 audio.play( enemyDeadSound )
+		 audio.play( GAME_SOUNDS.enemyDeadSound )
 end
 
 local function explodeBlastAndRemoveEnemies(obj1,obj2)
@@ -1029,7 +1035,7 @@ local function explodeBlastAndRemoveEnemies(obj1,obj2)
            blastExplosion:play()
       		  		   
            -- Play explosion sound!
-		   audio.play( enemyDeadSound )
+		   audio.play( GAME_SOUNDS.enemyDeadSound )
 end
 
 
@@ -1061,7 +1067,7 @@ local function explodeMissileAndRemove(obj1,obj2)
 
          missileExplosion:addEventListener( "sprite", mySpriteListener )         		  		   
            -- Play explosion sound!
-		 audio.play( enemyDeadSound )
+		 audio.play( GAME_SOUNDS.enemyDeadSound )
 end
 --make the transition back tyo the menu and call the hide callback removing all looping stuffs
 local function endGame()
@@ -1166,7 +1172,7 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
 			   GAME_VARS.died = true
 
 			    -- Play explosion sound!
-                audio.play( playerDeadSound )
+                audio.play( GAME_SOUNDS.playerDeadSound )
 
 			   GAME_VARS.lives = GAME_VARS.lives - 1
 			 --  livesText.text = message_live_1 .. lives
@@ -1187,7 +1193,7 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
       --   GAME_VARS.lives = GAME_VARS.lives - 1
 
 			    -- Play explosion sound!
-                audio.play( playerDeadSound )
+                audio.play( GAME_SOUNDS.playerDeadSound )
                  
 			   livesText.text = message_live_1 .. lives
    
@@ -1207,7 +1213,7 @@ elseif(((obj1.myName == missile_name_left_1 or obj1.myName == missile_name_rigth
 			   GAME_VARS.died = true
 
 			    -- Play explosion sound!
-                audio.play( playerDeadSound )
+                audio.play( GAME_SOUNDS.playerDeadSound )
                 explodeLaserAndRemove(obj1,obj2)
                 
                 for i = #lasersTable,1,-1 do
@@ -1452,7 +1458,7 @@ if(gameEnded == true)
   return
  end
  
-    audio.play( fireLaserSound )
+    audio.play( GAME_SOUNDS.fireLaserSound )
 
     for i=1,BOSS_FIRE_OPTIONS.BOSS_BULLETS_WAVE,1 do
 
@@ -1507,7 +1513,7 @@ if(gameEnded == true)
  then
   return
  end
-    audio.play( fireLaserSound )
+    audio.play( GAME_SOUNDS.fireLaserSound )
 
     for i=1,BOSS_FIRE_OPTIONS.BOSS_BULLETS_LINE,1 do
 
@@ -1544,7 +1550,7 @@ if(gameEnded == true)
  then
   return
  end
-    audio.play(fireLaserSound)
+    audio.play(GAME_SOUNDS.fireLaserSound)
 
     local firingSlice   = math.rad(180 / BOSS_FIRE_OPTIONS.BOSS_BULLETS_SPHERE)
     local vectorFacingX = ship.x - boss.x
@@ -1744,20 +1750,21 @@ local function showStringDelayed()--(delayMS)
         timer.cancel(fontTimerOptions.tm)
        end
        
-       fontTimerOptions.tm = timer.performWithDelay(500,remover)
+       fontTimerOptions.tm = timer.performWithDelay(fontTimerOptions.wait,remover)
        
       return
   end
       
 
       fontTimerOptions.fontChars[fontTimerOptions.idx + 1].alpha = 1
+      audio.play(GAME_SOUNDS.keyStrokeSound,{duration = 300})
       fontTimerOptions.idx = fontTimerOptions.idx + 1
       
 
 end
 
 
-local function placePopup(delay)
+local function placePopup()
   
     if(GAME_VARS.popped == false)
     then
@@ -1766,7 +1773,7 @@ local function placePopup(delay)
     STATIC_IMGS.popup.alpha        = 1
     fontTimerOptions.active        = true
     GAME_VARS.popped = true
-    fontTimerOptions.tm = timer.performWithDelay(delay,showStringDelayed,-1)
+    fontTimerOptions.tm = timer.performWithDelay(fontTimerOptions.speed,showStringDelayed,-1)
    end
   
    --showStringDelayed(delay)
@@ -2033,7 +2040,7 @@ function scene:show( event )
 		--start a loop function each half second
 		gameLoopTimer = timer.performWithDelay(500,gameLoop,0)
 		 -- Start the music!
-		 audio.play( musicTrack, { channel=1, loops=-1 } )
+		 audio.play( GAME_SOUNDS.musicTrack, { channel=1, loops=-1 } )
 	end
 end
 
@@ -2069,10 +2076,11 @@ function scene:destroy( event )
 	local sceneGroup = self.view
 	-- Code here runs prior to the removal of scene's view
  -- Dispose audio!
- audio.dispose( playerDeadSound )
- audio.dispose( enemyDeadSound )
- audio.dispose( fireLaserSound )
- audio.dispose( musicTrack)
+ audio.dispose( GAME_SOUNDS.playerDeadSound )
+ audio.dispose( GAME_SOUNDS.enemyDeadSound )
+ audio.dispose( GAME_SOUNDS.fireLaserSound )
+ audio.dispose( GAME_SOUNDS.musicTrack)
+ audio.dispose( GAME_SOUNDS.keyStrokeSound)
 end
 
 
