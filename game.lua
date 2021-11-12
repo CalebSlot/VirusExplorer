@@ -16,18 +16,6 @@ physics.setGravity(0,0)
 local fieldRadius = 120
 local fieldPower  = 0.4
 
-local fontTimerOptions =
-{
-   active = false,
-   tm     = nil,
-   idx    = 0,
-   speed  = 150,
-   wait   = 300,
-   fontChars = {},
-   len,
-}
-
-
 --TODO: finish this data type.....
 local sheetSyringes =
 {
@@ -1773,8 +1761,13 @@ local function updateAI()
      --1 CUTSCENE
      if (verifyState(GAME_STATE.GAME_CUTSCENE_1_ENTER)) 
 		 then
+         local effects = 
+         {
+           fadeIn  = 1000,
+           fadeOut = 1000,
+         }
          updateStateOnce(GAME_STATE.GAME_CUTSCENE_1_PLAYING)
-         popup:show(cutsceneEnter,cutsceneExit)
+         popup:show(cutsceneEnter,cutsceneExit,effects)
      end
      if (verifyState(GAME_STATE.GAME_CUTSCENE_1_PLAYING)) 
 		 then

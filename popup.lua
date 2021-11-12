@@ -34,7 +34,7 @@ function popup:create(background,width,height,sound,speed,wait,uiGroup,message,c
   
 end
 
-function popup:show(onEnter,onExit)
+function popup:show(onEnter,onExit,effects)
  if(self.fontTimerOptions.popped == false)
     then
     self.fontTimerOptions.onEnter = onEnter
@@ -47,7 +47,7 @@ function popup:show(onEnter,onExit)
     self.fontTimerOptions.popped             = true
    
  
-    transition.fadeIn( self.fontTimerOptions.popup , { time=500 } )
+    transition.fadeIn( self.fontTimerOptions.popup , { time=effects.fadeIn } )
     
     local showStringDelayed = function()
       
@@ -69,11 +69,22 @@ function popup:show(onEnter,onExit)
         end
         self.fontTimerOptions.fontChars = {}
         self.fontTimerOptions.len = 0
+        
+        transition.fadeOut( self.fontTimerOptions.popup , { time=effects.fadeOut } )
+        
+        local removePopup = function()
+        
         display.remove(self.fontTimerOptions.popup)
         timer.cancel(self.fontTimerOptions.tm)
    
         self.fontTimerOptions.popped  = false
         self.fontTimerOptions.onExit()
+        
+        end
+      
+        
+        timer.performWithDelay(effects.fadeOut,removePopup)
+       
        end
        
        self.fontTimerOptions.tm = timer.performWithDelay(self.fontTimerOptions.wait,remover)
