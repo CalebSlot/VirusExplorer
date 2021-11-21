@@ -1,7 +1,15 @@
 local font             = require("font")
 local popup = {}
+popup.__index = popup
 
-popup.fontTimerOptions =
+
+
+function popup:create(background,width,height,sound,speed,wait,uiGroup,message,charsForLine)
+  
+  local pop = {}             -- our new object
+  setmetatable(pop,popup)  -- make popup handle lookup
+ 
+  pop.fontTimerOptions =
 {
    popped = false,
    active = false,
@@ -16,22 +24,20 @@ popup.fontTimerOptions =
    onEnter,
    onExit,
 }
-
-function popup:create(background,width,height,sound,speed,wait,uiGroup,message,charsForLine)
-  self.fontTimerOptions.speed       = speed
-  self.fontTimerOptions.wait        = wait
+  pop.fontTimerOptions.speed       = speed
+  pop.fontTimerOptions.wait        = wait
   
-  self.fontTimerOptions.popup            = display.newImageRect(uiGroup,background,width,height)  
-  self.fontTimerOptions.popup.isVisible  = false
-  self.fontTimerOptions.sound            = audio.loadSound(sound)
-  self.fontTimerOptions.len              = message:len()
-  self.fontTimerOptions.fontChars = font:showStringMultiline(message,uiGroup,charsForLine,display.contentCenterX,display.contentCenterY - self.fontTimerOptions.popup.height / 2 + 60,40);
+  pop.fontTimerOptions.popup            = display.newImageRect(uiGroup,background,width,height)  
+  pop.fontTimerOptions.popup.isVisible  = false
+  pop.fontTimerOptions.sound            = audio.loadSound(sound)
+  pop.fontTimerOptions.len              = message:len()
+  pop.fontTimerOptions.fontChars = font:showStringMultiline(message,uiGroup,charsForLine,display.contentCenterX,display.contentCenterY - pop.fontTimerOptions.popup.height / 2 + 60,40);
   
-    for cI = 1,#self.fontTimerOptions.fontChars do
-        self.fontTimerOptions.fontChars[cI].isVisible = false
+    for cI = 1,#pop.fontTimerOptions.fontChars do
+        pop.fontTimerOptions.fontChars[cI].isVisible = false
     end
   
-  
+  return pop
 end
 
 function popup:show(onEnter,onExit,effects)
@@ -93,7 +99,7 @@ function popup:show(onEnter,onExit,effects)
   end
       
       self.fontTimerOptions.fontChars[self.fontTimerOptions.idx + 1].isVisible = true
-      audio.play(self.fontTimerOptions.sound,{duration = self.fontTimerOptions.speed})
+      self.fontTimerOptions.soundHandle = audio.play(self.fontTimerOptions.sound,{duration = self.fontTimerOptions.speed})
       self.fontTimerOptions.idx = self.fontTimerOptions.idx + 1
 
     end
@@ -103,7 +109,14 @@ function popup:show(onEnter,onExit,effects)
    end
 end
 function popup:destroy()
-  audio.dispose( popup.fontTimerOptions.sound)
+  if(self.fontTimerOptions.sound~=nil and self.fontTimerOptions.soundHandle~=nil) 
+  then
+   audio.stop(self.fontTimerOptions.soundHandle)
+   audio.dispose( self.fontTimerOptions.sound)
+   self.fontTimerOptions.soundHandle = nil;
+   self.fontTimerOptions.sound = nil;
+  end
+  
 end
 
 return popup

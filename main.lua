@@ -1,6 +1,6 @@
 local composer = require("composer")
 
-local require_debug = true
+local require_debug = false
 
 
 display.setStatusBar(display.HiddenStatusBar)

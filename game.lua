@@ -269,6 +269,10 @@ local GAME_SOUNDS =
   playerDeadSound,
   fireLaserSound,
   musicTrack,
+  enemyDeadSoundHandle,
+  playerDeadSoundHandle,
+  fireLaserSoundHandle,
+  musicTrackHandle,
 }
 --fire variable
 local lastFireSide
@@ -1302,6 +1306,9 @@ local GAME_STATE =
   GAME_CUTSCENE_1_ENTER = 9,
   GAME_CUTSCENE_1_EXIT   = 10,
   GAME_CUTSCENE_1_PLAYING = 11,
+  GAME_CUTSCENE_2_ENTER = 12,
+  GAME_CUTSCENE_2_EXIT   = 13,
+  GAME_CUTSCENE_2_PLAYING = 14,
 }
 local GAME_STATE_EXECUTED =
 {
@@ -1312,6 +1319,9 @@ local GAME_STATE_EXECUTED =
  b_GAME_CUTSCENE_1_ENTER = false,
  b_GAME_CUTSCENE_1_PLAYING  = false,
  b_GAME_CUTSCENE_1_EXIT  = false,
+ b_GAME_CUTSCENE_2_ENTER = false,
+ b_GAME_CUTSCENE_2_PLAYING  = false,
+ b_GAME_CUTSCENE_2_EXIT  = false,
 }
 local game_state = 0
 
@@ -1370,6 +1380,16 @@ local function updateStateOnce(state,nextState)
         GAME_STATE_EXECUTED.b_GAME_CUTSCENE_1_EXIT = true
        return
       end
+     if(state == GAME_STATE.GAME_CUTSCENE_2_ENTER and GAME_STATE_EXECUTED.b_GAME_CUTSCENE_2_ENTER == false) then
+       game_state     = state
+       GAME_STATE_EXECUTED.b_GAME_CUTSCENE_2_ENTER = true
+       return
+      end
+       if(state == GAME_STATE.GAME_CUTSCENE_2_EXIT and GAME_STATE_EXECUTED.b_GAME_CUTSCENE_2_EXIT == false) then
+        game_state     = state
+        GAME_STATE_EXECUTED.b_GAME_CUTSCENE_2_EXIT = true
+       return
+      end
       if(state == GAME_STATE.GAME_START_LOOP and GAME_STATE_EXECUTED.b_GAME_START_LOOP == false)
      	then
           GAME_STATE_EXECUTED.b_GAME_START_LOOP = true
@@ -1379,6 +1399,12 @@ local function updateStateOnce(state,nextState)
          if(state == GAME_STATE.GAME_CUTSCENE_1_PLAYING and GAME_STATE_EXECUTED.b_GAME_CUTSCENE_1_PLAYING == false)
      	then
           GAME_STATE_EXECUTED.b_GAME_CUTSCENE_1_PLAYING = true
+          game_state = state
+          return
+        end
+          if(state == GAME_STATE.GAME_CUTSCENE_2_PLAYING and GAME_STATE_EXECUTED.b_GAME_CUTSCENE_2_PLAYING == false)
+     	then
+          GAME_STATE_EXECUTED.b_GAME_CUTSCENE_2_PLAYING = true
           game_state = state
           return
         end
@@ -1412,12 +1438,6 @@ local function bossBefore()
  movePlayerCenterBottom(SECONDS_TRANSITION_BOSS * 1000)
  pauseTime()
  pauseFire()
-end
-
-local function bossAfter()
-  playTime()
-  playPlayerMovements()
-  playFire()
 end
 
 local speed_rigth   = 80;
@@ -1738,12 +1758,32 @@ local function cutsceneEnter()
 end
 
 local function cutsceneExit()
+  
    playTime()
    playPlayerMovements()
    playFire()
-   updateStateOnce(GAME_STATE.GAME_CUTSCENE_1_EXIT)
+   
+   if(verifyState(GAME_STATE.GAME_CUTSCENE_1_PLAYING))
+   then
+    updateStateOnce(GAME_STATE.GAME_CUTSCENE_1_EXIT)
+   end
+   if(verifyState(GAME_STATE.GAME_CUTSCENE_2_PLAYING))
+   then
+    updateStateOnce(GAME_STATE.GAME_CUTSCENE_2_EXIT)
+   end
 end
 
+local function bossAfter()
+ -- playTime()
+ -- playPlayerMovements()
+ -- playFire()
+     local effects = 
+         {
+           fadeIn  = 1000,
+           fadeOut = 1000,
+         }
+  popup2:show(cutsceneEnter,cutsceneExit,effects)
+end
 
 local function updateAI()
 
@@ -1767,7 +1807,7 @@ local function updateAI()
            fadeOut = 1000,
          }
          updateStateOnce(GAME_STATE.GAME_CUTSCENE_1_PLAYING)
-         popup:show(cutsceneEnter,cutsceneExit,effects)
+         popup1:show(cutsceneEnter,cutsceneExit,effects)
      end
      if (verifyState(GAME_STATE.GAME_CUTSCENE_1_PLAYING)) 
 		 then
@@ -1788,9 +1828,28 @@ local function updateAI()
      --BOSS??
     if(verifyState(GAME_STATE.GAME_BOSS_SPAWNING))
       then
-         updateStateOnce(GAME_STATE.GAME_BOSS)
-     		 createBossWithTransition(bossInfo.BOSS_HEIGTH/2,SECONDS_TRANSITION_BOSS * 1000,bossBefore,bossAfter)
+         updateStateOnce(GAME_STATE.GAME_CUTSCENE_2_ENTER)
       end
+
+   if (verifyState(GAME_STATE.GAME_CUTSCENE_2_ENTER)) 
+		 then
+         updateStateOnce(GAME_STATE.GAME_CUTSCENE_2_PLAYING)
+         createBossWithTransition(bossInfo.BOSS_HEIGTH/2,SECONDS_TRANSITION_BOSS * 1000,bossBefore,bossAfter)   
+     end
+     if (verifyState(GAME_STATE.GAME_CUTSCENE_2_PLAYING)) 
+		 then
+        return
+     end
+     if (verifyState(GAME_STATE.GAME_CUTSCENE_2_EXIT)) 
+		 then
+       --no need for the mask, it's the final boss!
+         if(shieldPower > 0)
+              	then
+                 display.remove(shield) 
+                end 
+         updateStateOnce(GAME_STATE.GAME_BOSS)
+     end
+
 
      --FIGHT THE FINAL BASTARD
     if(verifyState(GAME_STATE.GAME_BOSS))
@@ -1968,9 +2027,10 @@ function scene:create( event )
 
     placeShield()
     
-    local message = "HELLO! I'M THECHIEF OF YOUR ANTIVIRUS SYSTEM. LET'S KILL THEM ALL!"
-    popup:create(PATHS.path_popup,260*2,135*2,PATHS.path_keystroke,150,300,uiGroup,message,14)
-    
+    local message1 = "HELLO! I'M THECHIEF OF YOUR ANTIVIRUS SYSTEM. LET'S KILL THEM ALL!"
+    local message2 = "FINALLY... THE MOTHER OF VIRUSES! DESTROY IT OR AVOID IT!"
+    popup1 = popup:create(PATHS.path_popup,260*2,135*2,PATHS.path_keystroke,150,300,uiGroup,message1,14)
+    popup2 = popup:create(PATHS.path_popup,260*2,135*2,PATHS.path_keystroke,150,300,uiGroup,message2,14)
     
     STATIC_IMGS.avatar.x           = endX - (STATIC_IMGS.avatar.width / 2)
     STATIC_IMGS.avatar.y           = 30
@@ -2026,7 +2086,7 @@ function scene:show( event )
 		--start a loop function each half second
 		gameLoopTimer = timer.performWithDelay(500,gameLoop,0)
 		 -- Start the music!
-		 audio.play( GAME_SOUNDS.musicTrack, { channel=1, loops=-1 } )
+		GAME_SOUNDS.musicTrackHandle = audio.play( GAME_SOUNDS.musicTrack, { channel=1, loops=-1 } )
 	end
 end
 
@@ -2065,8 +2125,10 @@ function scene:destroy( event )
  audio.dispose( GAME_SOUNDS.playerDeadSound )
  audio.dispose( GAME_SOUNDS.enemyDeadSound )
  audio.dispose( GAME_SOUNDS.fireLaserSound )
+ audio.stop(GAME_SOUNDS.musicTrackHandle);
  audio.dispose( GAME_SOUNDS.musicTrack)
- popup:destroy()
+ popup1:destroy()
+ popup2:destroy()
 end
 
 
